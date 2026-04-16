@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Border Routing Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+            <h2 class="text-2xl font-bold mb-2 text-blue-400">B2B Payment Gateway</h2>
+            <p class="text-gray-400 mb-6 text-sm">Simulate a Mexican business paying an Indian supplier.</p>
+            
+            <label class="block text-sm font-medium mb-2">Deposit Amount (MXN)</label>
+            <input type="number" id="mxnAmount" value="10000" class="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 mb-6 text-white focus:outline-none focus:border-blue-500">
+            
+            <button onclick="triggerEngine()" id="sendBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                Execute Smart Route
+            </button>
+        </div>
+
+        <div class="bg-black p-6 rounded-xl border border-gray-700 font-mono text-sm h-80 overflow-y-auto relative shadow-inner">
+            <div class="text-gray-500 mb-4">/// ENGINE TERMINAL_</div>
+            <div id="terminal-output" class="space-y-2 text-green-400">
+                Waiting for transaction signal...
+            </div>
+            
+            <div id="loader" class="hidden mt-4 text-blue-400 animate-pulse">
+                [ ROUTING LOGIC ACTIVE - QUERYING BLOCKCHAINS ]...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function triggerEngine() {
+            const btn = document.getElementById('sendBtn');
+            const terminal = document.getElementById('terminal-output');
+            const loader = document.getElementById('loader');
+            const amount = document.getElementById('mxnAmount').value;
+
+            // Update UI State
+            btn.disabled = true;
+            btn.classList.replace('bg-blue-600', 'bg-gray-600');
+            terminal.innerHTML = `<span class="text-yellow-400">► Signal Caught: ${amount} MXN Deposit</span><br>`;
+            loader.classList.remove('hidden');
+
+            try {
+                // Knock on your Flask server's new API door
+                const response = await fetch('/api/execute-route', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ amount: parseFloat(amount) })
+                });
+
+                const data = await response.json();
+                
+                // Add an artificial delay so it feels like it's "thinking" for the demo
+                setTimeout(() => {
+                    loader.classList.add('hidden');
+                    
+                    if(data.status === 'success') {
+                        terminal.innerHTML += `
+                            <span class="text-blue-300">► Converted to: ${data.base_usdc} Base USDC</span><br>
+                            <span class="text-purple-400">► Scanning Networks...</span><br>
+                            <span class="text-purple-400">► WINNING ROUTE: ${data.winning_network} (Fee: $${data.network_fee})</span><br>
+                            <span class="text-green-400 font-bold">► SUCCESS: ${data.final_usdc} USDC Payout Fired!</span><br>
+                            <span class="text-white bg-green-700 px-2 mt-2 inline-block">Estimated Delivery: ₹${data.estimated_inr} INR</span>
+                        `;
+                    } else {
+                        terminal.innerHTML += `<span class="text-red-500">► ERROR: ${data.message}</span>`;
+                    }
+                    
+                    btn.disabled = false;
+                    btn.classList.replace('bg-gray-600', 'bg-blue-600');
+                }, 1500);
+
+            } catch (err) {
+                loader.classList.add('hidden');
+                terminal.innerHTML += `<span class="text-red-500">► ERROR: Server offline</span>`;
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-600', 'bg-blue-600');
+            }
+        }
+    </script>
+</body>
+</html>

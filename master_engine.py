@@ -100,5 +100,7 @@ def execute_route():
         return jsonify({"status": "error", "message": "Blockchain offline"}), 500
 
 if __name__ == '__main__':
-    print("🎧 Startup Dashboard ONLINE. Open http://127.0.0.1:5000 in your browser.")
-    app.run(host="0.0.0.0", port=5000)
+    # Render provides the port in an environment variable
+    port = int(os.environ.get("PORT", 5000))
+    print(f"🎧 Startup Dashboard ONLINE. Port {port}...")
+    app.run(host="0.0.0.0", port=port)
